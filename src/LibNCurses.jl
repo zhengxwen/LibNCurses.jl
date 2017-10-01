@@ -8,13 +8,13 @@
 # under the terms of the GNU General Public License Version 3 as
 # published by the Free Software Foundation.
 #
-# ncurses.jl is distributed in the hope that it will be useful, but
+# LibNCurses.jl is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public
-# License along with ncurses.jl.
+# License along with LibNCurses.jl.
 # If not, see <http://www.gnu.org/licenses/>.
 
 
@@ -31,13 +31,16 @@ export WINDOW, NC_OK, NC_ERR,
 	KEY_CODE_YES, KEY_MIN, KEY_DOWN, KEY_UP, KEY_LEFT, KEY_RIGHT, KEY_HOME, KEY_BACKSPACE, KEY_F0,
 	KEY_BTAB,
 	KEY_UNDO, KEY_MOUSE, KEY_RESIZE, KEY_EVENT,
+	addch,
 	addnstr, addstr, attron, attroff, attrset,
 	beep, bkgd,
 	box, can_change_color, cbreak,
+	clear, clearok, clrtobot, clrtoeol,
+	delch,
 	delwin,
 	endwin,
 	getch,
-	has_colors,
+	halfdelay, has_colors, has_ic, has_il,
 	initscr,
 	init_color,
 	init_pair,
@@ -51,7 +54,7 @@ export WINDOW, NC_OK, NC_ERR,
 	waddch, waddchnstr, waddchstr, mvwaddch, mvwaddchnstr, mvwaddchstr,
 	waddnstr, waddstr, wattron, wattroff, wattrset,
 	wbkgd,
-	werase,
+	werase, wgetch,
 	wmove,
 	wrefresh,
 	getattrs, getcurx, getcury, getbegx, getbegy, getmaxx, getmaxy,
@@ -188,7 +191,8 @@ const KEY_EVENT     = 0x19B		# We were interrupted by an event
 
 ####  Functions  ####
 
-# NCURSES_EXPORT(int) addch (const chtype);			/* generated */
+addch(ch::Char) = ccall((:addch, libnc), Cint, (Cuint,), ch)
+
 # NCURSES_EXPORT(int) addchnstr (const chtype *, int);		/* generated */
 # NCURSES_EXPORT(int) addchstr (const chtype *);			/* generated */
 
@@ -222,10 +226,13 @@ can_change_color() = ccall((:can_change_color, libnc), Bool, ())
 cbreak() = ccall((:cbreak, libnc), Cint, ())
 
 # NCURSES_EXPORT(int) chgat (int, attr_t, Cshort, const void *);	/* generated */
-# NCURSES_EXPORT(int) clear (void);				/* generated */
-# NCURSES_EXPORT(int) clearok (WINDOW *,bool);			/* implemented */
-# NCURSES_EXPORT(int) clrtobot (void);				/* generated */
-# NCURSES_EXPORT(int) clrtoeol (void);				/* generated */
+
+clear() = ccall((:clear, libnc), Cint, ())
+clearok(w::WINDOW, bf::Bool) = ccall((:clearok, libnc), Cint, (WINDOW, Cuchar), w, bf)
+clrtobot() = ccall((:clrtobot, libnc), Cint, ())
+clrtoeol() = ccall((:clrtoeol, libnc), Cint, ())
+
+
 # NCURSES_EXPORT(int) color_content (Cshort,Cshort*,Cshort*,Cshort*);	/* implemented */
 # NCURSES_EXPORT(int) color_set (Cshort,void*);			/* generated */
 # NCURSES_EXPORT(int) copywin (const WINDOW*,WINDOW*,int,int,int,int,int,int,int);	/* implemented */
@@ -233,7 +240,9 @@ cbreak() = ccall((:cbreak, libnc), Cint, ())
 # NCURSES_EXPORT(int) def_prog_mode (void);			/* implemented */
 # NCURSES_EXPORT(int) def_shell_mode (void);			/* implemented */
 # NCURSES_EXPORT(int) delay_output (int);				/* implemented */
-# NCURSES_EXPORT(int) delch (void);				/* generated */
+
+delch() = ccall((:delch, libnc), Cint, ())
+
 # NCURSES_EXPORT(void) delscreen (SCREEN *);			/* implemented */
 
 delwin(w::WINDOW) = ccall((:delwin, libnc), Cint, (WINDOW,), w)
@@ -259,13 +268,13 @@ getch() = ccall((:getch, libnc), Cint, ())
 # NCURSES_EXPORT(int) getnstr (char *, int);			/* generated */
 # NCURSES_EXPORT(int) getstr (char *);				/* generated */
 # NCURSES_EXPORT(WINDOW *) getwin (FILE *);			/* implemented */
-# NCURSES_EXPORT(int) halfdelay (int);				/* implemented */
 
+halfdelay(tenths::Int) = ccall((:halfdelay, libnc), Cint, (Cint,), tenths)
 has_colors() = ccall((:has_colors, libnc), Bool, ())
+has_ic() = ccall((:has_ic, libnc), Bool, ())
+has_il() = ccall((:has_il, libnc), Bool, ())
 
 
-# NCURSES_EXPORT(bool) has_ic (void);				/* implemented */
-# NCURSES_EXPORT(bool) has_il (void);				/* implemented */
 # NCURSES_EXPORT(int) hline (chtype, int);				/* generated */
 # NCURSES_EXPORT(void) idcok (WINDOW *, bool);			/* implemented */
 # NCURSES_EXPORT(int) idlok (WINDOW *, bool);			/* implemented */
@@ -479,7 +488,6 @@ wattrset(w::WINDOW, a::Int) = ccall((:wattrset, libnc), Cint, (WINDOW, Cint), w,
 # NCURSES_EXPORT(int) wattr_off (WINDOW *, attr_t, void *);	/* implemented */
 # NCURSES_EXPORT(int) wattr_set (WINDOW *, attr_t, Cshort, void *);	/* generated */
 
-# NCURSES_EXPORT(int) wbkgd (WINDOW *, chtype);			/* implemented */
 wbkgd(w::WINDOW, ch::Int) = ccall((:wbkgd, libnc), Cint, (WINDOW, Cuint), w, ch)
 
 
@@ -496,8 +504,7 @@ wbkgd(w::WINDOW, ch::Int) = ccall((:wbkgd, libnc), Cint, (WINDOW, Cuint), w, ch)
 # NCURSES_EXPORT(int) wechochar (WINDOW *, const chtype);		/* implemented */
 
 werase(w::WINDOW) = ccall((:werase, libnc), Cint, (WINDOW,), w)
-
-# NCURSES_EXPORT(int) wgetch (WINDOW *);				/* implemented */
+wgetch(w::WINDOW) = ccall((:wgetch, libnc), Cint, (WINDOW,), w)
 
 
 # NCURSES_EXPORT(int) wgetnstr (WINDOW *,char *,int);		/* implemented */

@@ -9,5 +9,4 @@ Julia interface to the ncurses library
 ```julia
 Pkg.status()
 Pkg.clone("https://github.com/zhengxwen/LibNCurses.jl.git")
-Pkg.add("LibNCurses")
 ```
