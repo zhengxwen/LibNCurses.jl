@@ -1,6 +1,6 @@
 # ===========================================================================
 #
-# ncurses.jl: Julia Interface to the ncurses library
+# LibNCurses.jl: Julia Interface to the ncurses library
 #
 # Copyright (C) 2017    Xiuwen Zheng
 #
@@ -18,7 +18,7 @@
 # If not, see <http://www.gnu.org/licenses/>.
 
 
-module ncurses
+module LibNCurses
 
 export WINDOW, NC_OK, NC_ERR,
 	COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE,
