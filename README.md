@@ -1,13 +1,12 @@
-# ncurses.jl
+# LibNCurses.jl
 
 Julia interface to the ncurses library
 
 
 ## Installation
 
-* Development version from Github, requiring `julia >= v0.5`
+* Development version from Github
 ```julia
 Pkg.status()
-Pkg.clone("https://github.com/zhengxwen/ncurses.jl.git")
-Pkg.build("ncurses")
+Pkg.clone("https://github.com/zhengxwen/LibNCurses.jl.git")
 ```
