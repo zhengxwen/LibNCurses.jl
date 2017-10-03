@@ -51,6 +51,7 @@ export WINDOW, NC_OK, NC_ERR,
 	scroll, scrollok,
 	start_color,
 	subwin,
+	ungetch,
 	waddch, waddchnstr, waddchstr, mvwaddch, mvwaddchnstr, mvwaddchstr,
 	waddnstr, waddstr, wattron, wattroff, wattrset,
 	wbkgd,
@@ -458,7 +459,10 @@ subwin(w::WINDOW, ny::Int, nx::Int, y::Int, x::Int) =
 # NCURSES_EXPORT(int) touchline (WINDOW *, int, int);		/* generated */
 # NCURSES_EXPORT(int) touchwin (WINDOW *);				/* generated */
 # NCURSES_EXPORT(int) typeahead (int);				/* implemented */
-# NCURSES_EXPORT(int) ungetch (int);				/* implemented */
+
+ungetch(ch::Int) = ccall((:ungetch, libnc), Cint, (Cint,), ch)
+
+
 # NCURSES_EXPORT(int) untouchwin (WINDOW *);			/* generated */
 # NCURSES_EXPORT(void) use_env (bool);				/* implemented */
 # NCURSES_EXPORT(int) vidattr (chtype);				/* implemented */
