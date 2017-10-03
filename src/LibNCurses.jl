@@ -20,7 +20,9 @@
 
 module LibNCurses
 
-export WINDOW, NC_OK, NC_ERR,
+import Base: filter
+
+export SCREEN, WINDOW, NC_OK, NC_ERR,
 	COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE,
 	COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE, COLOR_PAIR,
 	A_NORMAL, A_ATTRIBUTES, A_COLOR, A_STANDOUT, A_UNDERLINE, A_REVERSE,
@@ -39,26 +41,30 @@ export WINDOW, NC_OK, NC_ERR,
 	delch,
 	delwin,
 	endwin,
-	getch,
+	filter, flash, flushinp,
+	getattrs, getbkgd, getch,
+	getcurx, getcury, getbegx, getbegy, getmaxx, getmaxy, getparx, getpary,
 	halfdelay, has_colors, has_ic, has_il,
 	initscr,
 	init_color,
 	init_pair,
 	keypad, killchar, leaveok, longname, meta, move,
 	mvwaddnstr, mvwaddstr,
-	newwin, nl, nocbreak, nodelay, noecho, nonl,
-	refresh,
+	newwin, nl, nocbreak, nodelay, noecho, nonl, noqiflush, noraw,
+	refresh, resetty, reset_prog_mode, reset_shell_mode,
 	scroll, scrollok,
-	start_color,
-	subwin,
-	ungetch,
+	slk_clear, slk_color,
+	slk_init, slk_label, slk_noutrefresh, slk_refresh, slk_restore, slk_set,
+	slk_touch, standout, standend, start_color,
+	subwin, syncok,
+	termattrs, termname, timeout, touchline, touchwin, typeahead,
+	ungetch, untouchwin,
 	waddch, waddchnstr, waddchstr, mvwaddch, mvwaddchnstr, mvwaddchstr,
 	waddnstr, waddstr, wattron, wattroff, wattrset,
 	wbkgd,
 	werase, wgetch,
 	wmove,
 	wrefresh,
-	getattrs, getcurx, getcury, getbegx, getbegy, getmaxx, getmaxy,
 	# extensions
 	use_default_colors
 
@@ -81,6 +87,7 @@ const libnc = libname
 
 ####  Types  ####
 
+const SCREEN = Ptr{Void}
 const WINDOW = Ptr{Void}
 
 
@@ -197,9 +204,7 @@ addch(ch::Char) = ccall((:addch, libnc), Cint, (Cuint,), ch)
 # NCURSES_EXPORT(int) addchnstr (const chtype *, int);		/* generated */
 # NCURSES_EXPORT(int) addchstr (const chtype *);			/* generated */
 
-addnstr(s::String, n::Int) = ccall((:addnstr, libnc), Cint, (Cstring, Cint), s, n)
 addnstr(s::AbstractString, n::Int) = ccall((:addnstr, libnc), Cint, (Cstring, Cint), s, n)
-addstr(s::String) = ccall((:addstr, libnc), Cint, (Cstring,), s)
 addstr(s::AbstractString) = ccall((:addstr, libnc), Cint, (Cstring,), s)
 
 attron(a::Int) = ccall((:attron, libnc), Cint, (Cint,), a)
@@ -259,16 +264,27 @@ delwin(w::WINDOW) = ccall((:delwin, libnc), Cint, (WINDOW,), w)
 endwin() = ccall((:endwin, libnc), Cint, ())
 
 # NCURSES_EXPORT(char) erasechar (void);				/* implemented */
-# NCURSES_EXPORT(void) filter (void);				/* implemented */
-# NCURSES_EXPORT(int) flash (void);				/* implemented */
-# NCURSES_EXPORT(int) flushinp (void);				/* implemented */
-# NCURSES_EXPORT(chtype) getbkgd (WINDOW *);			/* generated */
 
+filter() = ccall((:filter, libnc), Void, ())
+flash() = ccall((:flash, libnc), Cint, ())
+flushinp() = ccall((:flushinp, libnc), Cint, ())
+
+getattrs(w::WINDOW) = ccall((:getattrs, libnc), Cint, (WINDOW,), w)
+getbkgd(w::WINDOW) = ccall((:getbkgd, libnc), Char, (WINDOW,), w)
 getch() = ccall((:getch, libnc), Cint, ())
 
 # NCURSES_EXPORT(int) getnstr (char *, int);			/* generated */
 # NCURSES_EXPORT(int) getstr (char *);				/* generated */
 # NCURSES_EXPORT(WINDOW *) getwin (FILE *);			/* implemented */
+
+getcurx(w::WINDOW) = ccall((:getcurx, libnc), Cint, (WINDOW,), w)
+getcury(w::WINDOW) = ccall((:getcury, libnc), Cint, (WINDOW,), w)
+getbegx(w::WINDOW) = ccall((:getbegx, libnc), Cint, (WINDOW,), w)
+getbegy(w::WINDOW) = ccall((:getbegy, libnc), Cint, (WINDOW,), w)
+getmaxx(w::WINDOW) = ccall((:getmaxx, libnc), Cint, (WINDOW,), w)
+getmaxy(w::WINDOW) = ccall((:getmaxy, libnc), Cint, (WINDOW,), w)
+getparx(w::WINDOW) = ccall((:getparx, libnc), Cint, (WINDOW,), w)
+getpary(w::WINDOW) = ccall((:getpary, libnc), Cint, (WINDOW,), w)
 
 halfdelay(tenths::Int) = ccall((:halfdelay, libnc), Cint, (Cint,), tenths)
 has_colors() = ccall((:has_colors, libnc), Bool, ())
@@ -285,7 +301,6 @@ has_il() = ccall((:has_il, libnc), Bool, ())
 # NCURSES_EXPORT(int) inchstr (chtype *);				/* generated */
 
 initscr() = ccall((:initscr, libnc), WINDOW, ())
-
 init_color(col::Int, r::Int, g::Int, b::Int) =
 	ccall((:init_color, libnc), Cint, (Cshort, Cshort, Cshort, Cshort), col, r, g, b)
 init_pair(pair::Int, f::Int, b::Int) =
@@ -345,9 +360,7 @@ mvwaddch(w::WINDOW, y::Int, x::Int, ch::Char) = ccall((:mvwaddch, libnc), Cint, 
 mvwaddch(w::WINDOW, y::Int, x::Int, ch::Int) = ccall((:mvwaddch, libnc), Cint, (WINDOW, Cint, Cint, Cuint), w, y, x, ch)
 mvwaddchnstr(w::WINDOW, y::Int, x::Int, chstr::Vector{Char}, n::Int) = ccall((:mvwaddchnstr, libnc), Cint, (WINDOW, Cint, Cint, Ptr{Cuint}, Cint), w, y, x, chstr, n)
 mvwaddchstr(w::WINDOW, y::Int, x::Int, chstr::Vector{Char}) = ccall((:mvwaddchstr, libnc), Cint, (WINDOW, Cint, Cint, Ptr{Cuint}), w, y, x, chstr)
-mvwaddnstr(w::WINDOW, y::Int, x::Int, s::String, n::Int) = ccall((:mvwaddnstr, libnc), Cint, (WINDOW, Cint, Cint, Cstring, Cint), w, y, x, s, n)
 mvwaddnstr(w::WINDOW, y::Int, x::Int, s::AbstractString, n::Int) = ccall((:mvwaddnstr, libnc), Cint, (WINDOW, Cint, Cint, Cstring, Cint), w, y, x, s, n)
-mvwaddstr(w::WINDOW, y::Int, x::Int, s::String) = ccall((:mvwaddstr, libnc), Cint, (WINDOW, Cint, Cint, Cstring), w, y, x, s)
 mvwaddstr(w::WINDOW, y::Int, x::Int, s::AbstractString) = ccall((:mvwaddstr, libnc), Cint, (WINDOW, Cint, Cint, Cstring), w, y, x, s)
 
 
@@ -383,10 +396,10 @@ nocbreak() = ccall((:nocbreak, libnc), Cint, ())
 nodelay(w::WINDOW, bf::Bool) = ccall((:nodelay, libnc), Cint, (WINDOW, Cuchar), w, bf)
 noecho() = ccall((:noecho, libnc), Cint, ())
 nonl() = ccall((:nonl, libnc), Cint, ())
+noqiflush() = ccall((:noqiflush, libnc), Void, ())
+noraw() = ccall((:noraw, libnc), Cint, ())
 
 
-# NCURSES_EXPORT(void) noqiflush (void);				/* implemented */
-# NCURSES_EXPORT(int) noraw (void);				/* implemented */
 # NCURSES_EXPORT(int) notimeout (WINDOW *,bool);			/* implemented */
 # NCURSES_EXPORT(int) overlay (const WINDOW*,WINDOW *);		/* implemented */
 # NCURSES_EXPORT(int) overwrite (const WINDOW*,WINDOW *);		/* implemented */
@@ -403,10 +416,11 @@ nonl() = ccall((:nonl, libnc), Cint, ())
 # NCURSES_EXPORT(int) redrawwin (WINDOW *);			/* generated */
 
 refresh() = ccall((:refresh, libnc), Cint, ())
+resetty() = ccall((:resetty, libnc), Cint, ())
+reset_prog_mode() = ccall((:reset_prog_mode, libnc), Cint, ())
+reset_shell_mode() = ccall((:reset_shell_mode, libnc), Cint, ())
 
-# NCURSES_EXPORT(int) resetty (void);				/* implemented */
-# NCURSES_EXPORT(int) reset_prog_mode (void);			/* implemented */
-# NCURSES_EXPORT(int) reset_shell_mode (void);			/* implemented */
+
 # NCURSES_EXPORT(int) ripoffline (int, int (*)(WINDOW *, int));	/* implemented */
 # NCURSES_EXPORT(int) savetty (void);				/* implemented */
 # NCURSES_EXPORT(int) scanw (NCURSES_CONST char *,...)		/* implemented */
@@ -423,6 +437,7 @@ scrollok(w::WINDOW, bf::Bool) = ccall((:scrollok, libnc), Cint, (WINDOW, Cuchar)
 # NCURSES_EXPORT(int) scr_set (const char *);			/* implemented */
 # NCURSES_EXPORT(int) setscrreg (int,int);				/* generated */
 # NCURSES_EXPORT(SCREEN *) set_term (SCREEN *);			/* implemented */
+
 # NCURSES_EXPORT(int) slk_attroff (const chtype);			/* implemented */
 # NCURSES_EXPORT(int) slk_attr_off (const attr_t, void *);		/* generated:WIDEC */
 # NCURSES_EXPORT(int) slk_attron (const chtype);			/* implemented */
@@ -430,18 +445,18 @@ scrollok(w::WINDOW, bf::Bool) = ccall((:scrollok, libnc), Cint, (WINDOW, Cuchar)
 # NCURSES_EXPORT(int) slk_attrset (const chtype);			/* implemented */
 # NCURSES_EXPORT(attr_t) slk_attr (void);				/* implemented */
 # NCURSES_EXPORT(int) slk_attr_set (const attr_t,Cshort,void*);	/* implemented */
-# NCURSES_EXPORT(int) slk_clear (void);				/* implemented */
-# NCURSES_EXPORT(int) slk_color (Cshort);				/* implemented */
-# NCURSES_EXPORT(int) slk_init (int);				/* implemented */
-# NCURSES_EXPORT(char *) slk_label (int);				/* implemented */
-# NCURSES_EXPORT(int) slk_noutrefresh (void);			/* implemented */
-# NCURSES_EXPORT(int) slk_refresh (void);				/* implemented */
-# NCURSES_EXPORT(int) slk_restore (void);				/* implemented */
-# NCURSES_EXPORT(int) slk_set (int,const char *,int);		/* implemented */
-# NCURSES_EXPORT(int) slk_touch (void);				/* implemented */
-# NCURSES_EXPORT(int) standout (void);				/* generated */
-# NCURSES_EXPORT(int) standend (void);				/* generated */
 
+slk_clear() = ccall((:slk_clear, libnc), Cint, ())
+slk_color(color_pair::Int) = ccall((:slk_color, libnc), Cint, (Cshort,), color_pair)
+slk_init(fmt::Int) = ccall((:slk_init, libnc), Cint, (Cint,), fmt)
+slk_label(labnum::Int) = unsafe_string(ccall((:slk_label, libnc), Cstring, (Cint,), labnum))
+slk_noutrefresh() = ccall((:slk_noutrefresh, libnc), Cint, ())
+slk_refresh() = ccall((:slk_refresh, libnc), Cint, ())
+slk_restore() = ccall((:slk_restore, libnc), Cint, ())
+slk_set(labnum::Int, label::AbstractString, fmt::Int) = ccall((:slk_set, libnc), Cint, (Cint, Cstring, Cint), labnum, label, fmt)
+slk_touch() = ccall((:slk_touch, libnc), Cint, ())
+standout() = ccall((:standout, libnc), Cint, ())
+standend() = ccall((:standend, libnc), Cint, ())
 start_color() = ccall((:start_color, libnc), Cint, ())
 
 
@@ -450,21 +465,21 @@ start_color() = ccall((:start_color, libnc), Cint, ())
 
 subwin(w::WINDOW, ny::Int, nx::Int, y::Int, x::Int) =
 	ccall((:subwin, libnc), WINDOW, (WINDOW,Cint,Cint,Cint,Cint), w, ny, nx, y, x)
+syncok(w::WINDOW, bf::Bool) = ccall((:syncok, libnc), Cint, (WINDOW, Cuchar), w, bf)
 
+termattrs() = Int(ccall((:termattrs, libnc), Cuint, ()))
+termname() = (p=ccall((:termname, libnc), Cstring, ()))==C_NULL ? "" : unsafe_string(p)
+timeout(delay::Int) = ccall((:timeout, libnc), Void, (Cint,), delay)
+touchline(w::WINDOW, start::Int, count::Int) = ccall((:touchline, libnc), Cint, (WINDOW, Cint, Cint), w, start, count)
+touchwin(w::WINDOW) = ccall((:touchwin, libnc), Cint, (WINDOW,), w)
+typeahead(fd::Int) = ccall((:typeahead, libnc), Cint, (Cint,), fd)
 
-# NCURSES_EXPORT(int) syncok (WINDOW *, bool);			/* implemented */
-# NCURSES_EXPORT(chtype) termattrs (void);				/* implemented */
-# NCURSES_EXPORT(char *) termname (void);				/* implemented */
-# NCURSES_EXPORT(void) timeout (int);				/* generated */
-# NCURSES_EXPORT(int) touchline (WINDOW *, int, int);		/* generated */
-# NCURSES_EXPORT(int) touchwin (WINDOW *);				/* generated */
-# NCURSES_EXPORT(int) typeahead (int);				/* implemented */
+ungetch(ch::Cint) = ccall((:ungetch, libnc), Cint, (Cint,), ch)
+untouchwin(w::WINDOW) = ccall((:untouchwin, libnc), Cint, (WINDOW,), w)
 
-ungetch(ch::Int) = ccall((:ungetch, libnc), Cint, (Cint,), ch)
-
-
-# NCURSES_EXPORT(int) untouchwin (WINDOW *);			/* generated */
 # NCURSES_EXPORT(void) use_env (bool);				/* implemented */
+
+
 # NCURSES_EXPORT(int) vidattr (chtype);				/* implemented */
 # NCURSES_EXPORT(int) vidputs (chtype, int (*)(int));		/* implemented */
 # NCURSES_EXPORT(int) vline (chtype, int);				/* generated */
@@ -479,9 +494,7 @@ waddch(w::WINDOW, ch::Char) = ccall((:waddch, libnc), Cint, (WINDOW, Cuint), w, 
 waddch(w::WINDOW, ch::Int) = ccall((:waddch, libnc), Cint, (WINDOW, Cuint), w, ch)
 waddchnstr(w::WINDOW, chstr::Vector{Char}, n::Int) = ccall((:waddchnstr, libnc), Cint, (WINDOW, Ptr{Cuint}, Cint), w, chstr, n)
 waddchstr(w::WINDOW, chstr::Vector{Char}) = ccall((:waddchstr, libnc), Cint, (WINDOW, Ptr{Cuint}), w, chstr)
-waddnstr(w::WINDOW, s::String, n::Int) = ccall((:waddnstr, libnc), Cint, (WINDOW, Cstring, Cint), w, s, n)
 waddnstr(w::WINDOW, s::AbstractString, n::Int) = ccall((:waddnstr, libnc), Cint, (WINDOW, Cstring, Cint), w, s, n)
-waddstr(w::WINDOW, s::String) = ccall((:waddstr, libnc), Cint, (WINDOW, Cstring), w, s)
 waddstr(w::WINDOW, s::AbstractString) = ccall((:waddstr, libnc), Cint, (WINDOW, Cstring), w, s)
 wattron(w::WINDOW, a::Int) = ccall((:wattron, libnc), Cint, (WINDOW, Cint), w, a)
 wattroff(w::WINDOW, a::Int) = ccall((:wattroff, libnc), Cint, (WINDOW, Cint), w, a)
@@ -546,18 +559,6 @@ wrefresh(w::WINDOW) = ccall((:wrefresh, libnc), Cint, (WINDOW,), w)
 # NCURSES_EXPORT(void) wtimeout (WINDOW *,int);			/* implemented */
 # NCURSES_EXPORT(int) wtouchln (WINDOW *,int,int,int);		/* implemented */
 # NCURSES_EXPORT(int) wvline (WINDOW *,chtype,int);		/* implemented */
-
-getattrs(w::WINDOW) = ccall((:getattrs, libnc), Cint, (WINDOW,), w)
-getcurx(w::WINDOW) = ccall((:getcurx, libnc), Cint, (WINDOW,), w)
-getcury(w::WINDOW) = ccall((:getcury, libnc), Cint, (WINDOW,), w)
-getbegx(w::WINDOW) = ccall((:getbegx, libnc), Cint, (WINDOW,), w)
-getbegy(w::WINDOW) = ccall((:getbegy, libnc), Cint, (WINDOW,), w)
-getmaxx(w::WINDOW) = ccall((:getmaxx, libnc), Cint, (WINDOW,), w)
-getmaxy(w::WINDOW) = ccall((:getmaxy, libnc), Cint, (WINDOW,), w)
-
-# NCURSES_EXPORT(int) getparx (const WINDOW *);			/* generated */
-# NCURSES_EXPORT(int) getpary (const WINDOW *);			/* generated */
-
 
 
 
