@@ -2,7 +2,7 @@
 #
 # LibNCurses.jl: Julia Interface to the ncurses library
 #
-# Copyright (C) 2017    Xiuwen Zheng
+# Copyright (C) 2017    Xiuwen Zheng (zhengxwen@gmail.com)
 #
 # This is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License Version 3 as
@@ -35,7 +35,7 @@ export SCREEN, WINDOW, NC_OK, NC_ERR,
 	KEY_UNDO, KEY_MOUSE, KEY_RESIZE, KEY_EVENT,
 	addch,
 	addnstr, addstr, attron, attroff, attrset,
-	beep, bkgd,
+	baudrate, beep, bkgd,
 	box, can_change_color, cbreak,
 	clear, clearok, clrtobot, clrtoeol,
 	delch,
@@ -58,7 +58,7 @@ export SCREEN, WINDOW, NC_OK, NC_ERR,
 	slk_touch, standout, standend, start_color,
 	subwin, syncok,
 	termattrs, termname, timeout, touchline, touchwin, typeahead,
-	ungetch, untouchwin,
+	ungetch, untouchwin, use_env,
 	waddch, waddchnstr, waddchstr, mvwaddch, mvwaddchnstr, mvwaddchstr,
 	waddnstr, waddstr, wattron, wattroff, wattrset,
 	wbkgd,
@@ -215,18 +215,17 @@ attrset(a::Int) = ccall((:attrset, libnc), Cint, (Cint,), a)
 # NCURSES_EXPORT(int) attr_off (attr_t, void *);			/* generated */
 # NCURSES_EXPORT(int) attr_on (attr_t, void *);			/* generated */
 # NCURSES_EXPORT(int) attr_set (attr_t, Cshort, void *);		/* generated */
-# NCURSES_EXPORT(int) baudrate (void);				/* implemented */
 
+baudrate() = ccall((:baudrate, libnc), Cint, ())
 beep() = ccall((:beep, libnc), Cint, ())
 bkgd(ch::Int) = ccall((:bkgd, libnc), Cint, (Cuint,), ch)
 
 # NCURSES_EXPORT(int) bkgd (chtype);				/* generated */
-
-
 # NCURSES_EXPORT(void) bkgdset (chtype);				/* generated */
 # NCURSES_EXPORT(int) border (chtype,chtype,chtype,chtype,chtype,chtype,chtype,chtype);	/* generated */
 
 box(w::WINDOW, verch::Int, horch::Int) = ccall((:box, libnc), Cint, (WINDOW, Cuint, Cuint), w, verch, horch)
+
 
 can_change_color() = ccall((:can_change_color, libnc), Bool, ())
 cbreak() = ccall((:cbreak, libnc), Cint, ())
@@ -474,10 +473,10 @@ touchline(w::WINDOW, start::Int, count::Int) = ccall((:touchline, libnc), Cint, 
 touchwin(w::WINDOW) = ccall((:touchwin, libnc), Cint, (WINDOW,), w)
 typeahead(fd::Int) = ccall((:typeahead, libnc), Cint, (Cint,), fd)
 
+ungetch(ch::Char) = ccall((:ungetch, libnc), Cint, (Cint,), ch)
 ungetch(ch::Cint) = ccall((:ungetch, libnc), Cint, (Cint,), ch)
 untouchwin(w::WINDOW) = ccall((:untouchwin, libnc), Cint, (WINDOW,), w)
-
-# NCURSES_EXPORT(void) use_env (bool);				/* implemented */
+use_env(bf::Bool) = ccall((:use_env, libnc), Void, (Cuchar, ), bf)
 
 
 # NCURSES_EXPORT(int) vidattr (chtype);				/* implemented */
