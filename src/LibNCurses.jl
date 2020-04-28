@@ -35,12 +35,11 @@ export SCREEN, WINDOW, NC_OK, NC_ERR,
 	KEY_UNDO, KEY_MOUSE, KEY_RESIZE, KEY_EVENT,
 	addch,
 	addnstr, addstr, attron, attroff, attrset,
-	baudrate, beep, bkgd,
+	baudrate, beep, bkgd, bkgdset,
 	box, can_change_color, cbreak,
 	clear, clearok, clrtobot, clrtoeol,
-	delch,
-	delwin,
-	endwin,
+	delch, delscreen, delwin, deleteln,
+	erase, endwin,
 	filter, flash, flushinp,
 	getattrs, getbkgd, getch,
 	getcurx, getcury, getbegx, getbegy, getmaxx, getmaxy, getparx, getpary,
@@ -87,8 +86,8 @@ const libnc = libname
 
 ####  Types  ####
 
-const SCREEN = Ptr{Void}
-const WINDOW = Ptr{Void}
+const SCREEN = Ptr{Cvoid}
+const WINDOW = Ptr{Cvoid}
 
 
 ####  Status  ####
@@ -219,9 +218,8 @@ attrset(a::Int) = ccall((:attrset, libnc), Cint, (Cint,), a)
 baudrate() = ccall((:baudrate, libnc), Cint, ())
 beep() = ccall((:beep, libnc), Cint, ())
 bkgd(ch::Int) = ccall((:bkgd, libnc), Cint, (Cuint,), ch)
+bkgdset(ch::Int) = ccall((:bkgdset, libnc), Cvoid, (Cuint,), ch)
 
-# NCURSES_EXPORT(int) bkgd (chtype);				/* generated */
-# NCURSES_EXPORT(void) bkgdset (chtype);				/* generated */
 # NCURSES_EXPORT(int) border (chtype,chtype,chtype,chtype,chtype,chtype,chtype,chtype);	/* generated */
 
 box(w::WINDOW, verch::Int, horch::Int) = ccall((:box, libnc), Cint, (WINDOW, Cuint, Cuint), w, verch, horch)
@@ -247,24 +245,23 @@ clrtoeol() = ccall((:clrtoeol, libnc), Cint, ())
 # NCURSES_EXPORT(int) delay_output (int);				/* implemented */
 
 delch() = ccall((:delch, libnc), Cint, ())
-
-# NCURSES_EXPORT(void) delscreen (SCREEN *);			/* implemented */
-
+delscreen(scr::SCREEN) = ccall((:delscreen, libnc), Cvoid, (SCREEN,), scr)
 delwin(w::WINDOW) = ccall((:delwin, libnc), Cint, (WINDOW,), w)
+deleteln() = ccall((:deleteln, libnc), Cint, ())
 
-# NCURSES_EXPORT(int) deleteln (void);				/* generated */
+
 # NCURSES_EXPORT(WINDOW *) derwin (WINDOW *,int,int,int,int);	/* implemented */
 # NCURSES_EXPORT(int) doupdate (void);				/* implemented */
 # NCURSES_EXPORT(WINDOW *) dupwin (WINDOW *);			/* implemented */
 # NCURSES_EXPORT(int) echo (void);					/* implemented */
 # NCURSES_EXPORT(int) echochar (const chtype);			/* generated */
-# NCURSES_EXPORT(int) erase (void);				/* generated */
 
+erase() = ccall((:erase, libnc), Cint, ())
 endwin() = ccall((:endwin, libnc), Cint, ())
 
 # NCURSES_EXPORT(char) erasechar (void);				/* implemented */
 
-filter() = ccall((:filter, libnc), Void, ())
+filter() = ccall((:filter, libnc), Cvoid, ())
 flash() = ccall((:flash, libnc), Cint, ())
 flushinp() = ccall((:flushinp, libnc), Cint, ())
 
@@ -395,7 +392,7 @@ nocbreak() = ccall((:nocbreak, libnc), Cint, ())
 nodelay(w::WINDOW, bf::Bool) = ccall((:nodelay, libnc), Cint, (WINDOW, Cuchar), w, bf)
 noecho() = ccall((:noecho, libnc), Cint, ())
 nonl() = ccall((:nonl, libnc), Cint, ())
-noqiflush() = ccall((:noqiflush, libnc), Void, ())
+noqiflush() = ccall((:noqiflush, libnc), Cvoid, ())
 noraw() = ccall((:noraw, libnc), Cint, ())
 
 
@@ -468,7 +465,7 @@ syncok(w::WINDOW, bf::Bool) = ccall((:syncok, libnc), Cint, (WINDOW, Cuchar), w,
 
 termattrs() = Int(ccall((:termattrs, libnc), Cuint, ()))
 termname() = (p=ccall((:termname, libnc), Cstring, ()))==C_NULL ? "" : unsafe_string(p)
-timeout(delay::Int) = ccall((:timeout, libnc), Void, (Cint,), delay)
+timeout(delay::Int) = ccall((:timeout, libnc), Cvoid, (Cint,), delay)
 touchline(w::WINDOW, start::Int, count::Int) = ccall((:touchline, libnc), Cint, (WINDOW, Cint, Cint), w, start, count)
 touchwin(w::WINDOW) = ccall((:touchwin, libnc), Cint, (WINDOW,), w)
 typeahead(fd::Int) = ccall((:typeahead, libnc), Cint, (Cint,), fd)
@@ -476,7 +473,7 @@ typeahead(fd::Int) = ccall((:typeahead, libnc), Cint, (Cint,), fd)
 ungetch(ch::Char) = ccall((:ungetch, libnc), Cint, (Cint,), ch)
 ungetch(ch::Cint) = ccall((:ungetch, libnc), Cint, (Cint,), ch)
 untouchwin(w::WINDOW) = ccall((:untouchwin, libnc), Cint, (WINDOW,), w)
-use_env(bf::Bool) = ccall((:use_env, libnc), Void, (Cuchar, ), bf)
+use_env(bf::Bool) = ccall((:use_env, libnc), Cvoid, (Cuchar, ), bf)
 
 
 # NCURSES_EXPORT(int) vidattr (chtype);				/* implemented */
