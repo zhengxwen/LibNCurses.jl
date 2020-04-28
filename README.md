@@ -8,5 +8,5 @@ Julia interface to the ncurses library
 * Development version from Github
 ```julia
 Pkg.status()
-Pkg.clone("https://github.com/zhengxwen/LibNCurses.jl.git")
+Pkg.add(PackageSpec(url="https://github.com/zhengxwen/LibNCurses.jl.git", rev="master"))
 ```

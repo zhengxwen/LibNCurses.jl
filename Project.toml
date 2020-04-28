@@ -1,0 +1,4 @@
+name = "LibNCurses"
+uuid = "43c66b4a-c48b-4637-9fde-b24f1a3e7402"
+authors = ["Xiuwen Zheng <zhengxwen@gmail.com>"]
+version = "0.1.0"
