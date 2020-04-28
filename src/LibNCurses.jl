@@ -71,11 +71,11 @@ export SCREEN, WINDOW, NC_OK, NC_ERR,
 
 ####  Link to ncurses library  ####
 
-@static if is_apple()
+@static if Base.Sys.isapple()
 	libname = "libncurses.dylib"
-elseif is_windows()
+elseif Base.Sys.iswindows()
 	libname = "libncurses.dll"
-elseif is_unix()
+elseif Base.Sys.isunix()
 	libname = "libncurses.so"
 else
 	error("The platform is not supported.")
